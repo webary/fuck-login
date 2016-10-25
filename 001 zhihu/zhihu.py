@@ -9,9 +9,9 @@ Info
 - email  : "xchaoinfo@qq.com"
 - date   : "2016.2.4"
 Update
-- name   : "wangmengcn"
-- email  : "eclipse_sv@163.com"
-- date   : "2016.4.21"
+- name   : "wenbo"
+- email  : "webary@sina.com"
+- date   : "2016.10.25"
 '''
 import requests
 try:
@@ -41,7 +41,12 @@ session.cookies = cookielib.LWPCookieJar(filename='cookies')
 try:
     session.cookies.load(ignore_discard=True)
 except:
-    print("Cookie 未能加载")
+    print("Can't load cookie!")
+
+try:
+    input = raw_input
+except:
+    pass
 
 
 def get_xsrf():
@@ -56,8 +61,8 @@ def get_xsrf():
     return _xsrf[0]
 
 
-# 获取验证码
 def get_captcha():
+    """获取验证码"""
     t = str(int(time.time() * 1000))
     captcha_url = 'http://www.zhihu.com/captcha.gif?r=' + t + "&type=login"
     r = session.get(captcha_url, headers=headers)
@@ -71,13 +76,13 @@ def get_captcha():
         im.show()
         im.close()
     except:
-        print(u'请到 %s 目录找到captcha.jpg 手动输入' % os.path.abspath('captcha.jpg'))
-    captcha = input("please input the captcha\n>")
+        print(u'please open the directory [%s], view captcha.jpg!' % os.path.abspath('captcha.jpg'))
+    captcha = input("please input the captcha:\n>")
     return captcha
 
 
-def isLogin():
-    # 通过查看用户个人信息来判断是否已经登录
+def is_logined():
+    """通过查看用户个人信息来判断是否已经登录"""
     url = "https://www.zhihu.com/settings/profile"
     login_code = session.get(url, headers=headers, allow_redirects=False).status_code
     if login_code == 200:
@@ -87,9 +92,10 @@ def isLogin():
 
 
 def login(secret, account):
+    """执行登录主过程"""
     # 通过输入的用户名判断是否是手机号
-    if re.match(r"^1\d{10}$", account):
-        print("手机号登录 \n")
+    if re.match(r"^1[3|4|5|7|8]\d{9}$", account):  # 匹配手机号码格式
+        print("Login by phone number.\n")
         post_url = 'http://www.zhihu.com/login/phone_num'
         postdata = {
             '_xsrf': get_xsrf(),
@@ -98,11 +104,12 @@ def login(secret, account):
             'phone_num': account,
         }
     else:
-        if "@" in account:
-            print("邮箱登录 \n")
+        if re.match(r"^[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\w](?:[\w-]*[\w])?\.)" \
+                    "+[\w](?:[\w-]*[\w])?$", account):  # 匹配邮箱格式
+            print("Login by email.\n")
         else:
-            print("你的账号输入有问题，请重新登录")
-            return 0
+            print("Please check your username and try again, only support logining by email or phone number!")
+            return
         post_url = 'http://www.zhihu.com/login/email'
         postdata = {
             '_xsrf': get_xsrf(),
@@ -124,16 +131,11 @@ def login(secret, account):
         print(login_code['msg'])
     session.cookies.save()
 
-try:
-    input = raw_input
-except:
-    pass
-
 
 if __name__ == '__main__':
-    if isLogin():
-        print('您已经登录')
+    if is_logined():
+        print('You have logined!')
     else:
-        account = input('请输入你的用户名\n>  ')
-        secret = input("请输入你的密码\n>  ")
+        account = input('Please input your username:\n>  ')
+        secret = input("Please input your password:\n>  ")
         login(secret, account)
